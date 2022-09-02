@@ -77,31 +77,23 @@ class MergeAscDtms():
 
                 if l.endswith('\n'):
                     l = l[:l.index('\n')]
-
                 l = l.split(f'{self.dataSep}')
 
                 if counter < 6:
-
                     if any(map(lambda x: x in headerComponents, l)):
                         counter += 1
-
                         try:
                             header[l[0]] = int(l[1])
-
                         except:
                             header[l[0]] = float(l[1])
 
                 else:
                     heights = []
-
                     for el in l:
-
                         try:
                             heights.append(int(el))
-
                         except:
                             heights.append(float(el))
-
                     dtm.append(heights)
 
         return header, np.array(dtm)

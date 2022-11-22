@@ -43,9 +43,10 @@ def askUserForPath(inOrOut='input'):
 
 def askUserForHeaderComponents(headerOptions):
     """
-
+    Args:
+        headerOptions - dictionary with ints as keys and lists of strings representing header components as values
     Returns:
-
+        list of selected header components to use in program execution
     """
     while True:
         print('Here are available header structures to choose from...')

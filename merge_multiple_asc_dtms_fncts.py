@@ -41,10 +41,44 @@ def askUserForPath(inOrOut='input'):
     return inputCatalog
 
 
+def askUserForHeaderComponents(headerOptions):
+    """
+
+    Returns:
+
+    """
+    while True:
+        print('Here are available header structures to choose from...')
+
+        for k, v in headerOptions.items():
+            print(k, ':', ','.join(el for el in v))
+        print('\n')
+
+        answer = input('Select the number corresponding to the header structure of Your files from available options: {}...\n'\
+                       .format(','.join(str(num) for num in headerOptions.keys())))
+
+        try:
+            answer = int(answer)
+        except:
+            print('You have to specify one number from available options: {}, and NOT TEXT'\
+                  .format(','.join(str(num) for num in headerOptions.keys())))
+            continue
+
+        if answer in headerOptions.keys():
+            break
+        else:
+            print("The number You've entered is not valid. Choose one of the available numbers: {}"\
+                  .format(','.join(str(num) for num in headerOptions.keys())))
+            continue
+
+    return headerOptions[answer]
+
+
 class MergeAscDtms():
 
 
-    def __init__(self, inputCatalog, outputCatalog, dataSep = ' ', outputFileName = 'merged_dtm.asc'):
+    def __init__(self, inputCatalog, outputCatalog, dataSep = ' ', outputFileName = 'merged_dtm.asc',
+                 headerComponents = ['ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'NODATA_value']):
         """
         Args:
             dataSep - String - data separator to be used while loading and exporting datasets (' ' by default)
@@ -54,6 +88,7 @@ class MergeAscDtms():
         self.outputCatalog = outputCatalog
         self.dataSep = dataSep
         self.outputFileName = outputFileName
+        self.headerComponents = headerComponents
 
 
     def loadSingleAscDtm(self, path):
@@ -65,7 +100,7 @@ class MergeAscDtms():
             dtm - np.array() with a (nrows, ncols) shape, storing terrain heights (float values for appropriate heights,
                 int values for nodata_value)
         """
-        headerComponents = ['ncols', 'nrows', 'xllcenter', 'yllcenter', 'cellsize', 'nodata_value']
+
 
         with open(path, 'r') as f:
 
@@ -77,10 +112,14 @@ class MergeAscDtms():
 
                 if l.endswith('\n'):
                     l = l[:l.index('\n')]
+
+                if l.startswith(' '):
+                    l = l[1:]
+
                 l = l.split(f'{self.dataSep}')
 
                 if counter < 6:
-                    if any(map(lambda x: x in headerComponents, l)):
+                    if any(map(lambda x: x in self.headerComponents, l)):
                         counter += 1
                         try:
                             header[l[0]] = int(l[1])
@@ -137,14 +176,14 @@ class MergeAscDtms():
         time.sleep(.5)
 
         return {
-            'mean cols num': int(np.mean([v['ncols'] for v in headers.values()])),
-            'mean rows num': int(np.mean([v['nrows'] for v in headers.values()])),
-            'mean cell size': int(np.mean([v['cellsize'] for v in headers.values()])),
-            'min X': min([v['xllcenter'] for v in headers.values()]),
-            'max X': max([v['xllcenter'] for v in headers.values()]),
-            'min Y': min([v['yllcenter'] for v in headers.values()]),
-            'max Y': max([v['yllcenter'] for v in headers.values()]),
-            'no data': int(np.mean([v['nodata_value'] for v in headers.values()]))
+            'mean cols num': int(np.mean([v[self.headerComponents[0]] for v in headers.values()])),
+            'mean rows num': int(np.mean([v[self.headerComponents[1]] for v in headers.values()])),
+            'mean cell size': int(np.mean([v[self.headerComponents[4]] for v in headers.values()])),
+            'min X': min([v[self.headerComponents[2]] for v in headers.values()]),
+            'max X': max([v[self.headerComponents[2]] for v in headers.values()]),
+            'min Y': min([v[self.headerComponents[3]] for v in headers.values()]),
+            'max Y': max([v[self.headerComponents[3]] for v in headers.values()]),
+            'no data': int(np.mean([v[self.headerComponents[-1]] for v in headers.values()]))
         }
 
 
@@ -187,8 +226,8 @@ class MergeAscDtms():
         print('Sorting datasets by Y (descending) & by X (ascending)...\n')
         time.sleep(.5)
 
-        sortedByY = list(zip([k for k in headers.keys()], [v['xllcenter'] for v in headers.values()],
-                             [v['yllcenter'] for v in headers.values()]))
+        sortedByY = list(zip([k for k in headers.keys()], [v[self.headerComponents[2]] for v in headers.values()],
+                             [v[self.headerComponents[3]] for v in headers.values()]))
         sortedByY.sort(key=itemgetter(2), reverse=True)
 
         splittedBySimilarY = [sortedByY[i: i + numOfDatasetsAlongX] for i in range(0, len(sortedByY), numOfDatasetsAlongX)]
@@ -223,20 +262,20 @@ class MergeAscDtms():
 
             if i == 0:
 
-                xMax = v['xllcenter']
+                xMax = v[self.headerComponents[2]]
                 xMaxTile = k
 
-                yMax = v['yllcenter']
+                yMax = v[self.headerComponents[3]]
                 yMaxTile = k
 
             else:
 
-                if v['xllcenter'] > xMax:
-                    xMax = v['xllcenter']
+                if v[self.headerComponents[2]] > xMax:
+                    xMax = v[self.headerComponents[2]]
                     xMaxTile = k
 
-                if v['yllcenter'] > yMax:
-                    yMax = v['yllcenter']
+                if v[self.headerComponents[3]] > yMax:
+                    yMax = v[self.headerComponents[3]]
                     yMaxTile = k
 
         return xMaxTile, yMaxTile
@@ -261,9 +300,9 @@ class MergeAscDtms():
         time.sleep(.5)
 
         return np.ones((int((statistics['max Y'] - statistics['min Y']) / statistics['mean cell size'] + \
-                            headers[yMaxTile]['nrows']),
+                            headers[yMaxTile][self.headerComponents[1]]),
                         int((statistics['max X'] - statistics['min X']) / statistics['mean cell size'] + \
-                            headers[xMaxTile]['ncols'])), dtype=int) * statistics['no data']
+                            headers[xMaxTile][self.headerComponents[0]])), dtype=int) * statistics['no data']
 
 
     def fillFinalDtmArrayWithData(self, sortedDatasets, headers, statistics, dtms, finalDtmArray):
@@ -296,7 +335,7 @@ class MergeAscDtms():
                 print(f'Processing data from dataset #{counter + 1} - {curDataset}')
                 counter += 1
 
-                xCur, yCur = headers[curDataset]['xllcenter'], headers[curDataset]['yllcenter']
+                xCur, yCur = headers[curDataset][self.headerComponents[2]], headers[curDataset][self.headerComponents[3]]
 
                 xDiff, yDiff = xCur - statistics['min X'], yCur - statistics['min Y']
 
@@ -340,12 +379,12 @@ class MergeAscDtms():
         time.sleep(.5)
 
         return {
-            'ncols': finalDtmArray.shape[1],
-            'nrows': finalDtmArray.shape[0],
-            'xllcenter': statistics['min X'],
-            'yllcenter': statistics['min Y'],
-            'cellsize': statistics['mean cell size'],
-            'nodata_value': statistics['no data']
+            self.headerComponents[0]  : finalDtmArray.shape[1],
+            self.headerComponents[1]  : finalDtmArray.shape[0],
+            self.headerComponents[2]  : statistics['min X'],
+            self.headerComponents[3]  : statistics['min Y'],
+            self.headerComponents[4]  : statistics['mean cell size'],
+            self.headerComponents[-1] : statistics['no data']
         }
 
 

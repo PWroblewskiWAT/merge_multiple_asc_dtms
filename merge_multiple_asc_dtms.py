@@ -5,7 +5,7 @@
 import os
 import time
 import shutil
-from merge_multiple_asc_dtms_fncts import MergeAscDtms, askUserForPath
+from merge_multiple_asc_dtms_fncts import MergeAscDtms, askUserForPath, askUserForHeaderComponents
 
 # print program name
 columns = shutil.get_terminal_size().columns
@@ -16,8 +16,18 @@ print('-' * columns)
 inputCatalog = askUserForPath('input')
 outputCatalog = askUserForPath('output')
 
+# specify header options:
+headerOptions = {
+    1 : ['ncols', 'nrows', 'xllcenter', 'yllcenter', 'cellsize', 'nodata_value'],
+    2 : ['ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'NODATA_value']
+}
+
+# ask user for header components
+headerComponents = askUserForHeaderComponents(headerOptions)
+
 # initialize MergeAscDtms() class
-merge = MergeAscDtms(inputCatalog, outputCatalog, ' ', 'merged_dtm.asc')
+merge = MergeAscDtms(inputCatalog, outputCatalog, ' ', 'merged_dtm.asc', headerComponents)
+
 
 while True:
     # load all *.asc DTMs from input catalog and display the loading time in sec

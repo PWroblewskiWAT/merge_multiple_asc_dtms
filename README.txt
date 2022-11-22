@@ -2,9 +2,11 @@ merge_multiple_asc_dtms program contains two *.py files:
 	merge_multiple_asc_dtms.py - script to execute
 	merge_multiple_asc_dtms_fncts.py - script containing all of the functions, classes and methods, used by merge_multiple_asc_dtms.py
 
-After running the merge_multiple_asc_dtms.py, the user will be asked to specify path to CATALOGS:
-	- input catalog - for example: "C:\Users\user01\data_processing\dtms_merging\input"
-	- output catalog - for example: "C:\Users\user01\data_processing\dtms_merging\input"
+After running the merge_multiple_asc_dtms.py, the user will be asked to specify
+	a) path to CATALOGS:
+		- input catalog - for example: "C:\Users\user01\data_processing\dtms_merging\input"
+		- output catalog - for example: "C:\Users\user01\data_processing\dtms_merging\input"
+	b) number corresponding to a header structure of input files. To select the correct option, the user should check for header components' names in asc files.
 
 After that, the script is going to be executed, and the user will see some informations about the sequentially performed processes:
 	- 'Loading datasets...'
